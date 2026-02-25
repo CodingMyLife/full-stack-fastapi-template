@@ -1,26 +1,36 @@
-# Stage 0, "build-stage", based on Bun, to build and compile the frontend
-FROM oven/bun:1 AS build-stage
+# Stage 0, "build-stage", based on Node.js, to build and compile the frontend
+FROM node:24-alpine AS build-stage
 
 WORKDIR /app
 
-COPY package.json bun.lock /app/
+COPY package.json /app/
 
 COPY frontend/package.json /app/frontend/
 
 WORKDIR /app/frontend
 
-RUN bun install
+RUN npm install
 
 COPY ./frontend /app/frontend
-ARG VITE_API_URL
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
-RUN bun run build
+RUN npm run build
 
 
-# Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx
-FROM nginx:1
+# Stage 1, based on Node.js, to serve the Next.js standalone app
+FROM node:24-alpine
 
-COPY --from=build-stage /app/frontend/dist/ /usr/share/nginx/html
+WORKDIR /app
 
-COPY ./frontend/nginx.conf /etc/nginx/conf.d/default.conf
-COPY ./frontend/nginx-backend-not-found.conf /etc/nginx/extra-conf.d/backend-not-found.conf
+COPY --from=build-stage /app/frontend/.next/standalone ./
+COPY --from=build-stage /app/frontend/.next/static ./.next/static
+COPY --from=build-stage /app/frontend/public ./public
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]

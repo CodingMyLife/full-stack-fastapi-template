@@ -1,10 +1,10 @@
+"use client"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import {
-  createFileRoute,
-  Link as RouterLink,
-  redirect,
-} from "@tanstack/react-router"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -30,25 +30,15 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>
 
-export const Route = createFileRoute("/recover-password")({
-  component: RecoverPassword,
-  beforeLoad: async () => {
-    if (isLoggedIn()) {
-      throw redirect({
-        to: "/",
-      })
-    }
-  },
-  head: () => ({
-    meta: [
-      {
-        title: "Recover Password - FastAPI Template",
-      },
-    ],
-  }),
-})
+export default function RecoverPassword() {
+  const router = useRouter()
 
-function RecoverPassword() {
+  useEffect(() => {
+    if (isLoggedIn()) {
+      router.replace("/")
+    }
+  }, [router])
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -119,9 +109,9 @@ function RecoverPassword() {
 
           <div className="text-center text-sm">
             Remember your password?{" "}
-            <RouterLink to="/login" className="underline underline-offset-4">
+            <Link href="/login" className="underline underline-offset-4">
               Log in
-            </RouterLink>
+            </Link>
           </div>
         </form>
       </Form>

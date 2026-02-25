@@ -1,11 +1,10 @@
+"use client"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import {
-  createFileRoute,
-  Link as RouterLink,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -25,10 +24,6 @@ import { isLoggedIn } from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
-const searchSchema = z.object({
-  token: z.string().catch(""),
-})
-
 const formSchema = z
   .object({
     new_password: z
@@ -46,30 +41,21 @@ const formSchema = z
 
 type FormData = z.infer<typeof formSchema>
 
-export const Route = createFileRoute("/reset-password")({
-  component: ResetPassword,
-  validateSearch: searchSchema,
-  beforeLoad: async ({ search }) => {
-    if (isLoggedIn()) {
-      throw redirect({ to: "/" })
-    }
-    if (!search.token) {
-      throw redirect({ to: "/login" })
-    }
-  },
-  head: () => ({
-    meta: [
-      {
-        title: "Reset Password - FastAPI Template",
-      },
-    ],
-  }),
-})
-
-function ResetPassword() {
-  const { token } = Route.useSearch()
+function ResetPasswordForm() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const token = searchParams.get("token") || ""
   const { showSuccessToast, showErrorToast } = useCustomToast()
-  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (isLoggedIn()) {
+      router.replace("/")
+      return
+    }
+    if (!token) {
+      router.replace("/login")
+    }
+  }, [router, token])
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -87,7 +73,7 @@ function ResetPassword() {
     onSuccess: () => {
       showSuccessToast("Password updated successfully")
       form.reset()
-      navigate({ to: "/login" })
+      router.push("/login")
     },
     onError: handleError.bind(showErrorToast),
   })
@@ -155,12 +141,20 @@ function ResetPassword() {
 
           <div className="text-center text-sm">
             Remember your password?{" "}
-            <RouterLink to="/login" className="underline underline-offset-4">
+            <Link href="/login" className="underline underline-offset-4">
               Log in
-            </RouterLink>
+            </Link>
           </div>
         </form>
       </Form>
     </AuthLayout>
+  )
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense>
+      <ResetPasswordForm />
+    </Suspense>
   )
 }

@@ -1,7 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-const ErrorComponent = () => {
+export default function GlobalError() {
   return (
     <div
       className="flex min-h-screen items-center justify-center flex-col p-4"
@@ -25,5 +27,3 @@ const ErrorComponent = () => {
     </div>
   )
 }
-
-export default ErrorComponent
