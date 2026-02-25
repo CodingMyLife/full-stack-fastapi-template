@@ -1,11 +1,12 @@
+"use client"
+
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  createFileRoute,
-  Link as RouterLink,
-  redirect,
-} from "@tanstack/react-router"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+
 import { AuthLayout } from "@/components/Common/AuthLayout"
 import {
   Form,
@@ -39,26 +40,16 @@ const formSchema = z
 
 type FormData = z.infer<typeof formSchema>
 
-export const Route = createFileRoute("/signup")({
-  component: SignUp,
-  beforeLoad: async () => {
-    if (isLoggedIn()) {
-      throw redirect({
-        to: "/",
-      })
-    }
-  },
-  head: () => ({
-    meta: [
-      {
-        title: "Sign Up - FastAPI Template",
-      },
-    ],
-  }),
-})
-
-function SignUp() {
+export default function SignUp() {
+  const router = useRouter()
   const { signUpMutation } = useAuth()
+
+  useEffect(() => {
+    if (isLoggedIn()) {
+      router.replace("/")
+    }
+  }, [router])
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
@@ -176,14 +167,12 @@ function SignUp() {
 
           <div className="text-center text-sm">
             Already have an account?{" "}
-            <RouterLink to="/login" className="underline underline-offset-4">
+            <Link href="/login" className="underline underline-offset-4">
               Log in
-            </RouterLink>
+            </Link>
           </div>
         </form>
       </Form>
     </AuthLayout>
   )
 }
-
-export default SignUp

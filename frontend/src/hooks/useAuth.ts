@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
+import { useRouter } from "next/navigation"
 
 import {
   type Body_login_login_access_token as AccessToken,
@@ -12,11 +12,12 @@ import { handleError } from "@/utils"
 import useCustomToast from "./useCustomToast"
 
 const isLoggedIn = () => {
+  if (typeof window === "undefined") return false
   return localStorage.getItem("access_token") !== null
 }
 
 const useAuth = () => {
-  const navigate = useNavigate()
+  const router = useRouter()
   const queryClient = useQueryClient()
   const { showErrorToast } = useCustomToast()
 
@@ -30,7 +31,7 @@ const useAuth = () => {
     mutationFn: (data: UserRegister) =>
       UsersService.registerUser({ requestBody: data }),
     onSuccess: () => {
-      navigate({ to: "/login" })
+      router.push("/login")
     },
     onError: handleError.bind(showErrorToast),
     onSettled: () => {
@@ -48,14 +49,14 @@ const useAuth = () => {
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: () => {
-      navigate({ to: "/" })
+      router.push("/")
     },
     onError: handleError.bind(showErrorToast),
   })
 
   const logout = () => {
     localStorage.removeItem("access_token")
-    navigate({ to: "/login" })
+    router.push("/login")
   }
 
   return {
